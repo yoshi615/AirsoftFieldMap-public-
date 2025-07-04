@@ -1,0 +1,266 @@
+/* PCレイアウト */
+@media (min-width: 768px) {
+    body {
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        font-family: sans-serif;
+        overflow-y: hidden;
+    }
+    #left-panel {
+        width: 35%;
+        padding: 40px 10px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border-right: 1px solid #ddd;
+        height: 100vh;
+        background: rgba(88, 88, 88, 0.2);
+        box-sizing: border-box;
+        box-shadow:rgba(0, 0, 0, 0.1) 10px 0px 39px;
+        z-index: 2;
+    }
+    #right-panel {
+        width: 65%;
+        height: 100vh;
+        position: relative;
+        z-index: 1;
+    }
+    #map {
+        height: 100vh;
+        width: 100%;
+        z-index: 1;
+    }
+    #map-style,
+    #marker-filter-dropdown {
+        display: none;
+    }
+    #map-tools {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        opacity: 0.5;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: none;
+        background: #fff;
+        padding: 10px;
+        transition: transform 0.3s, opacity 0.3s;
+    }
+    #map-tools.visible {
+        opacity: 1;
+        display: block;
+        z-index: 9999;
+        transform: none;
+    }
+    .map-control {
+        display: block;
+        margin: 5px 0;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 14px;
+        width: 200px;
+    }
+    button, button.map-control {
+        background: #7e7e7e;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 10px 20px;
+        margin: 5px;
+        font-size: 16px;
+        transition: background 0.3s, transform 0.3s;
+    }
+    button:hover, button.map-control:hover {
+        background: #4d4d4d;
+        transform: scale(1.05);
+    }
+    #marker-search {
+        padding: 8px 12px;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        margin: 10px 0 12px 0;
+        width: 122px;
+        height: 30px;
+        position: absolute;
+        z-index: 9999;
+        right: 5px;
+        top: 6px;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        color: #585858 !important;
+        background: #ffffff;
+        outline: none;
+        box-sizing: border-box;
+    }
+    #marker-search:focus { border: 1.5px solid #ffffff00; }
+    #marker-search::placeholder { color: #959595; }
+    .field-photos {
+        width: calc(100% - 20px);
+        height: auto;
+        margin: 10px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        object-fit: contain;
+    }
+}
+
+/* スマホレイアウト */
+@media (max-width: 767px) {
+    body {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100vh;
+    }
+    #left-panel {
+        width: 100%;
+        height: 50vh;
+        position: fixed;
+        bottom: 0;
+        background: rgba(88, 88, 88, 0.2);
+        z-index: 2;
+        transition: transform 0.3s;
+        overflow-y: auto;
+        transform: translateY(100%);
+        padding: 20px;
+        box-sizing: border-box;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px -10px 39px;
+    }
+    #left-panel:not(.closed) {
+        transform: translateY(0);
+    }
+    #right-panel {
+        width: 100%;
+        height: 100vh;
+        transition: height 0.3s;
+        position: relative;
+    }
+    #map {
+        height: 50%;
+        width: 100%;
+        transition: height 0.3s;
+    }
+    #map-style,
+    #marker-filter-dropdown {
+        display: none;
+    }
+    #map-tools {
+        position: absolute;
+        top: 50px;
+        right: 10px;
+        z-index: 9999;
+        background: #fff;
+        display: none;
+        padding: 10px;
+    }
+    #map-tools.visible {
+        display: block;
+    }
+    .map-control {
+        display: block;
+        margin: 5px 0;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        font-size: 12px;
+        width: 150px;
+    }
+    button, button.map-control {
+        background: #7e7e7e;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        padding: 10px 20px;
+        margin: 5px;
+        font-size: 16px;
+        transition: background 0.3s, transform 0.3s;
+    }
+    button:hover, button.map-control:hover {
+        background: #4d4d4d;
+        transform: scale(1.05);
+    }
+    #marker-search {
+        padding: 8px 12px;
+        border: 1px solid #aaa;
+        border-radius: 6px;
+        margin: 10px 0 12px 0;
+        width: 122px;
+        max-width: 350px;
+        height: 30px;
+        position: absolute;
+        z-index: 9999;
+        left: 50%;
+        top: 6px;
+        transform: translateX(-50%);
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        color: #bebebe !important;
+        background: #ffffff;
+        outline: none;
+        box-sizing: border-box;
+    }
+    #marker-search:focus { border: 1.5px solid #ffffff00; }
+    #marker-search::placeholder { color: #959595; }
+    .field-photos {
+        width: calc(100% - 40px);
+        height: auto;
+        margin: 10px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        object-fit: contain;
+    }
+}
+
+/* 共通部品 */
+.custom-marker {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    display: block;
+    pointer-events: auto;
+    transform: translateY(8px);
+}
+.marker-list {
+    padding-left: 0;
+    list-style: none;
+    text-align: center;
+    margin: 0;
+}
+.marker-list li { margin: 8px 0; }
+.marker-list-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 1em;
+    padding: 0;
+}
+.back-to-list-btn {
+    position: relative;
+    top: -18px;
+    left: -10px;
+    margin-bottom: 10px;
+    padding: 6px 16px;
+    font-size: 1em;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background: #7e7e7e;
+    cursor: pointer;
+    color: #fff;
+}
+
+/* 現在地マーカーのスタイル */
+.current-location-marker {
+	width: 45px;
+	height: 45px;
+	object-fit: contain;
+	display: block;
+	pointer-events: auto;
+}
