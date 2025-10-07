@@ -24,7 +24,9 @@ async function fetchCSV(fileName) {
 }
 
 async function checkAndInit() {
-	const fieldList = await fetchCSV('FieldList.csv');
+	const [fieldList] = await Promise.all([
+		fetchCSV('FieldList.csv'),
+	]);
 
 	let success = true;
 	if (fieldList !== null) {
@@ -46,4 +48,5 @@ async function checkAndInit() {
 	}
 }
 
+// ...existing code...
 checkAndInit();
