@@ -48,6 +48,7 @@ function init() {
 	let currentLocationMarker = null;
 	let currentLocationPrefecture = null;
 	let expandedPrefectures = new Set();
+	const defaultMapView = { center: [139.98886293394258, 35.853556991089334], zoom: 8.7 };
 	const typeFilter = new TypeFilter();	
 	const prefectureCenterZoom = {
 		'北海道': { center: [143.2141, 43.0642], zoom: 5.5 },'青森': { center: [140.7402, 40.8244], zoom: 7.5 },'岩手': { center: [141.1527, 39.7036], zoom: 7.0 },'宮城': { center: [140.8719, 38.2682], zoom: 8.0 },'秋田': { center: [140.1024, 39.7186], zoom: 7.5 },'山形': { center: [140.3633, 38.2404], zoom: 8.0 },'福島': { center: [140.4677, 37.7500], zoom: 7.5 },'茨城': { center: [140.4467, 36.3414], zoom: 8.0 },'栃木': { center: [139.8837, 36.5658], zoom: 8.5 },'群馬': { center: [139.0608, 36.3911], zoom: 8.5 },'埼玉': { center: [139.6489, 35.8617], zoom: 9.0 },'千葉': { center: [140.1233, 35.6049], zoom: 8.5 },'東京': { center: [139.6917, 35.6895], zoom: 9.5 },'神奈川': { center: [139.6425, 35.4478], zoom: 9.0 },'新潟': { center: [139.0235, 37.9026], zoom: 7.0 },'富山': { center: [137.2114, 36.6959], zoom: 8.5 },'石川': { center: [136.6256, 36.5944], zoom: 8.0 },'福井': { center: [136.2217, 35.9432], zoom: 8.5 },'山梨': { center: [138.5684, 35.6642], zoom: 8.5 },'長野': { center: [138.1811, 36.2048], zoom: 7.5 },'岐阜': { center: [137.2110, 35.3912], zoom: 7.5 },'静岡': { center: [138.3833, 34.9769], zoom: 8.0 },'愛知': { center: [137.1805, 35.1803], zoom: 8.5 },'三重': { center: [136.5086, 34.7302], zoom: 8.0 },'滋賀': { center: [136.1018, 35.0045], zoom: 9.0 },'京都': { center: [135.7681, 35.0116], zoom: 8.5 },'大阪': { center: [135.5200, 34.6937], zoom: 9.5 },'兵庫': { center: [134.6900, 34.6913], zoom: 8.0 },'奈良': { center: [135.8327, 34.6851], zoom: 9.0 },'和歌山': { center: [135.1675, 34.2261], zoom: 8.0 },'鳥取': { center: [134.2324, 35.5038], zoom: 8.5 },'島根': { center: [132.5564, 35.4725], zoom: 7.5 },'岡山': { center: [133.9348, 34.6617], zoom: 8.5 },'広島': { center: [132.4596, 34.3963], zoom: 8.0 },'山口': { center: [131.4706, 34.3859], zoom: 7.5 },'徳島': { center: [134.5593, 34.0658], zoom: 8.5 },'香川': { center: [134.0434, 34.3401], zoom: 9.5 },'愛媛': { center: [132.7661, 33.8416], zoom: 8.0 },'高知': { center: [133.5311, 33.5597], zoom: 7.5 },'福岡': { center: [130.4017, 33.6064], zoom: 8.5 },'佐賀': { center: [130.2985, 33.2494], zoom: 9.0 },'長崎': { center: [129.8737, 32.7503], zoom: 7.5 },'熊本': { center: [130.7417, 32.7898], zoom: 8.0 },'大分': { center: [131.6127, 33.2382], zoom: 8.0 },'宮崎': { center: [131.4214, 32.0106], zoom: 8.0 },'鹿児島': { center: [130.5581, 31.5602], zoom: 7.0 },'沖縄': { center: [127.6792, 26.2124], zoom: 7.0 },
@@ -68,6 +69,41 @@ function init() {
 		}
 	}
 
+	function flyToView(center, zoom) {
+		map.flyTo({ center, zoom, duration: 1000 });
+	}
+
+	function moveToPrefecture(prefecture) {
+		const config = prefectureCenterZoom[prefecture];
+		if (config) flyToView(config.center, config.zoom);
+	}
+
+	function resetActiveMarker() {
+		if (lastActiveMarkerIndex === null || !markers[lastActiveMarkerIndex]) return;
+		const image = markers[lastActiveMarkerIndex].getElement();
+		if (image && image.tagName === 'IMG') image.src = 'images/pin_blue.png';
+	}
+
+	function activateMarker(index) {
+		resetActiveMarker();
+		const image = markers[index] && markers[index].getElement();
+		if (image && image.tagName === 'IMG') image.src = 'images/pin_magenta.png';
+		lastActiveMarkerIndex = index;
+	}
+
+	function restoreMapView() {
+		if (expandedPrefectures.size) {
+			moveToPrefecture(Array.from(expandedPrefectures)[0]);
+			return;
+		}
+		if (currentLocationMarker) {
+			const { lng, lat } = currentLocationMarker.getLngLat();
+			flyToView([lng, lat], 11);
+			return;
+		}
+		flyToView(defaultMapView.center, defaultMapView.zoom);
+	}
+
 	showLoading();
 
 	initMap();
@@ -84,8 +120,8 @@ function init() {
 			}
 		});
 
-		let center = [139.98886293394258, 35.853556991089334];
-		let zoom = 8.7;
+		let center = defaultMapView.center;
+		let zoom = defaultMapView.zoom;
 
 		if (validPoints > 0) {
 			center = [lonSum / validPoints, latSum / validPoints];
@@ -294,8 +330,6 @@ function init() {
 		console.log('NearestStation markers to add:', data.NearestStation);
 		allRows.forEach((row, index) => {
 			const id = row[0] || '';
-			const category = row[1] || '';
-			const type = row[2] || '';
 			const field_name = row[3] || '';
 			const RegularMeetingCharge = row[4] || '';
 			const CharterCharge = row[5] || '';
@@ -304,7 +338,6 @@ function init() {
 			const SiteLink = row[8] || '';
 			const BookLink = row[9] || '';
 			const BusBookLink = row[10] || '';
-			const Reading = row[11] || '';
 			const NearestStation = row[12] || '';
 			const OtherInfo = row[13] || '';
 			const lunch = row[14] || '';
@@ -328,13 +361,7 @@ function init() {
 			marker.getElement().addEventListener('click', (event) => {
 				event.stopPropagation();
 				const infoPanel = document.getElementById('info');
-				if (lastActiveMarkerIndex !== null && markers[lastActiveMarkerIndex]) {
-					const prevImg = markers[lastActiveMarkerIndex].getElement();
-					if (prevImg && prevImg.tagName === 'IMG') prevImg.src = 'images/pin_blue.png';
-				}
-				const thisImg = marker.getElement();
-				if (thisImg && thisImg.tagName === 'IMG') thisImg.src = 'images/pin_magenta.png';
-				lastActiveMarkerIndex = index;
+				activateMarker(index);
 
 				if (lastClickedMarker === marker) {
 					if (infoPanel) infoPanel.innerHTML = '';
@@ -350,38 +377,10 @@ function init() {
 					const backBtn = document.getElementById('back-to-list-btn');
 					if (backBtn) {
 						backBtn.addEventListener('click', function() {
-							if (lastActiveMarkerIndex !== null && markers[lastActiveMarkerIndex]) {
-								const prevImg = markers[lastActiveMarkerIndex].getElement();
-								if (prevImg && prevImg.tagName === 'IMG') prevImg.src = 'images/pin_blue.png';
-								lastActiveMarkerIndex = null;
-							}
+							resetActiveMarker();
+							lastActiveMarkerIndex = null;
 							showMarkerList(rows);
-							if (expandedPrefectures.size > 0) {
-								const firstExpandedPrefecture = Array.from(expandedPrefectures)[0];
-								const prefectureConfig = prefectureCenterZoom[firstExpandedPrefecture];
-								if (prefectureConfig) {
-									map.flyTo({
-										center: prefectureConfig.center,
-										zoom: prefectureConfig.zoom,
-										duration: 1000
-									});
-								}
-							} else {
-								if (currentLocationMarker) {
-									const currentLngLat = currentLocationMarker.getLngLat();
-									map.flyTo({
-										center: [currentLngLat.lng, currentLngLat.lat],
-										zoom: 11,
-										duration: 1000
-									});
-								} else {
-									map.flyTo({
-										center: [139.98886293394258, 35.853556991089334],
-										zoom: 8.7,
-										duration: 1000
-									});
-								}
-							}
+							restoreMapView();
 						});
 					}
 				}
@@ -451,47 +450,25 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 		if (!leftPanel) return;
 		hideLoading();
 		rows = rowsToShow;
-		const sortedRows = [...rowsToShow].sort((a, b) => {
-			const readingA = ((a && a[11]) || '').toString().normalize('NFKC');
-			const readingB = ((b && b[11]) || '').toString().normalize('NFKC');
-			const fallbackA = ((a && a[3]) || '').toString().normalize('NFKC');
-			const fallbackB = ((b && b[3]) || '').toString().normalize('NFKC');
-			const keyA = readingA || fallbackA;
-			const keyB = readingB || fallbackB;
-			const hiraA = toHiragana(keyA);
-			const hiraB = toHiragana(keyB);
-			return hiraA.localeCompare(hiraB, 'ja', { sensitivity: 'base' });
-		});
+		const sortedRows = [...rowsToShow].sort(compareRows);
 
 		const prefectureGroups = {};
 		sortedRows.forEach(row => {
 			if (!row || !Array.isArray(row)) return;
 			
-			const id = row[0] || '';
 			const category = row[1] || '';
 			const field_name = row[3] || '';
-			const nearestStation = row[12] || '';
 			
 			if (!field_name || String(field_name).trim() === '') return;
 			
-			const prefecture = extractPrefecture(field_name, nearestStation, category);
+			const prefecture = extractPrefecture(category);
 			if (!prefectureGroups[prefecture]) {
 				prefectureGroups[prefecture] = [];
 			}
 			prefectureGroups[prefecture].push(row);
 		});
 		Object.keys(prefectureGroups).forEach(prefecture => {
-			prefectureGroups[prefecture].sort((a, b) => {
-				const readingA = ((a && a[11]) || '').toString().normalize('NFKC');
-				const readingB = ((b && b[11]) || '').toString().normalize('NFKC');
-				const fallbackA = ((a && a[3]) || '').toString().normalize('NFKC');
-				const fallbackB = ((b && b[3]) || '').toString().normalize('NFKC');
-				const keyA = readingA || fallbackA;
-				const keyB = readingB || fallbackB
-				const hiraA = toHiragana(keyA);
-				const hiraB = toHiragana(keyB);
-				return hiraA.localeCompare(hiraB, 'ja', { sensitivity: 'base' });
-			});
+			prefectureGroups[prefecture].sort(compareRows);
 		});
 
 		const prefectureOrder = [
@@ -513,14 +490,7 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 			if (!expandedPrefectures.size && prefecture === currentLocationPrefecture) {
 				expandedPrefectures.add(prefecture);
 				isExpanded = true;
-				const cfg = prefectureCenterZoom[prefecture];
-				if (cfg && map) {
-					map.flyTo({
-						center: cfg.center,
-						zoom: cfg.zoom,
-						duration: 1000
-					});
-				}
+				if (map) moveToPrefecture(prefecture);
 			}
 			
 			const displayStyle = isExpanded ? 'block' : 'none';
@@ -579,35 +549,13 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 
 					fieldsList.style.display = 'block';
 					toggleIcon.textContent = '-';
-					const prefectureConfig = prefectureCenterZoom[prefecture];
-					if (prefectureConfig) {
-						map.flyTo({
-							center: prefectureConfig.center,
-							zoom: prefectureConfig.zoom,
-							duration: 1000
-						});
-					}
+					moveToPrefecture(prefecture);
 				} else {
 					fieldsList.style.display = 'none';
 					toggleIcon.textContent = '+';
 					expandedPrefectures.delete(prefecture);
 
-					if (expandedPrefectures.size === 0) {
-						if (currentLocationMarker) {
-							const currentLngLat = currentLocationMarker.getLngLat();
-							map.flyTo({
-								center: [currentLngLat.lng, currentLngLat.lat],
-								zoom: 11,
-								duration: 1000
-							});
-						} else {
-							map.flyTo({
-								center: [139.98886293394258, 35.853556991089334],
-								zoom: 8.7,
-								duration: 1000
-							});
-						}
-					}
+					if (!expandedPrefectures.size) restoreMapView();
 				}
 
 				updateMarkerVisibilityWithFilter();
@@ -623,13 +571,7 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 				const markerId = this.getAttribute('data-marker-id');
 				const idx = allRows.findIndex(row => row[0] == markerId);
 				if (markers[idx] && markers[idx].getElement()) {
-					if (lastActiveMarkerIndex !== null && markers[lastActiveMarkerIndex]) {
-						const prevImg = markers[lastActiveMarkerIndex].getElement();
-						if (prevImg && prevImg.tagName === 'IMG') prevImg.src = 'images/pin_blue.png';
-					}
-					const thisImg = markers[idx].getElement();
-					if (thisImg && thisImg.tagName === 'IMG') thisImg.src = 'images/pin_magenta.png';
-					lastActiveMarkerIndex = idx;
+					activateMarker(idx);
 
 					leftPanel.scrollTop = 0;
 
@@ -649,7 +591,12 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 		}
 	}
 
-	function extractPrefecture(fieldName, nearestStation, category) {
+	function compareRows(a, b) {
+		const key = row => String((row && row[11]) || row && row[3] || '').normalize('NFKC');
+		return toHiragana(key(a)).localeCompare(toHiragana(key(b)), 'ja', { sensitivity: 'base' });
+	}
+
+	function extractPrefecture(category) {
 		const prefectureMap = {
 			'0': '東京','1': '千葉', '2': '茨城','3': '埼玉','4': '神奈川','5': '栃木','6': '群馬','7': '静岡','8': '愛知','9': '大阪','10': '兵庫','11': '京都','12': '福岡','13': '北海道','14': '青森','15': '岩手','16': '宮城','17': '秋田','18': '山形','19': '福島','20': '新潟','21': '富山','22': '石川','23': '福井','24': '山梨','25': '長野','26': '岐阜','27': '三重','28': '滋賀','29': '奈良','30': '和歌山','31': '鳥取','32': '島根','33': '岡山','34': '広島','35': '山口','36': '徳島','37': '香川','38': '愛媛','39': '高知','40': '佐賀','41': '長崎','42': '熊本','43': '大分','44': '宮崎','45': '鹿児島','46': '沖縄'
 		};
@@ -676,7 +623,7 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 			const category = row[1] || '';
 			const field_name = row[3] || '';
 			const nearestStation = row[12] || '';
-			const prefecture = extractPrefecture(field_name, nearestStation, category);
+			const prefecture = extractPrefecture(category);
 
 			const matchesFilter = filteredIds.has(row[0]);
 			const isToggleExpanded = expandedPrefectures.has(prefecture);
@@ -702,30 +649,28 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 	}
 
 	function setupSlideshowListeners() {
+		document.querySelectorAll('.prev-btn, .next-btn, .expandable-image').forEach(element => {
+			const newElement = element.cloneNode(true);
+			element.parentNode.replaceChild(newElement, element);
+		});
+
 		document.querySelectorAll('.prev-btn, .next-btn').forEach(btn => {
-			const newBtn = btn.cloneNode(true);
-			btn.parentNode.replaceChild(newBtn, btn);
-		});
-
-		document.querySelectorAll('.prev-btn').forEach(btn => {
+			const direction = btn.classList.contains('next-btn') ? 1 : -1;
 			btn.addEventListener('click', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
 				const fieldId = this.getAttribute('data-field-id');
-				changeSlide(fieldId, -1);
-			});
-		});
-		
-		document.querySelectorAll('.next-btn').forEach(btn => {
-			btn.addEventListener('click', function(e) {
-				e.preventDefault();
-				e.stopPropagation();
-				const fieldId = this.getAttribute('data-field-id');
-				changeSlide(fieldId, 1);
+				changeSlide(fieldId, direction);
 			});
 		});
 
-		setupImageExpandListeners();
+		document.querySelectorAll('.expandable-image').forEach(img => {
+			img.addEventListener('click', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				expandImage(this.src, this.alt);
+			});
+		});
 	}
 
 	function changeSlide(id, direction) {
@@ -760,7 +705,6 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 			const newImg = img.cloneNode(true);
 			img.parentNode.replaceChild(newImg, img);
 		});
-
 		document.querySelectorAll('.expandable-image').forEach(img => {
 			img.addEventListener('click', function(e) {
 				e.preventDefault();
@@ -887,5 +831,5 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 		return match ? parseInt(match[1]) : 1;
 	}
 	typeFilter.onFilterChange = applyFilters;
-	typeFilter.initAll();
+	typeFilter.initAll(allRows);
 }

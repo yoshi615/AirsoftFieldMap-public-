@@ -72,6 +72,13 @@ class TypeFilter {
 					this.handleIndoorOutdoorOn(dataType, typeInputs);
 				}
 
+				if (['2', '3', '4', '5', '6', '7'].includes(dataType) && cb.checked) {
+					this.enableMatchingMainTypes(dataType, typeInputs);
+				}
+
+				this.disableMainTypesWithoutFineTypes(typeInputs);
+				this.disableMainTypesWithoutMatchingFineTypes(typeInputs);
+
 				this.selectedTypes.clear();
 				typeInputs.forEach(c => { 
 					if (c.checked) this.selectedTypes.add(String(c.getAttribute('data-type'))); 
@@ -84,6 +91,59 @@ class TypeFilter {
 
 				this.triggerFilterChange();
 			});
+		});
+	}
+
+	enableMatchingMainTypes(fineType, typeInputs) {
+		if (!this.allRows) return;
+
+		const matchingMainTypes = new Set();
+		this.allRows.forEach(row => {
+			if (!row || !Array.isArray(row)) return;
+			const types = String(row[2] || '').split(/[^0-9]+/).filter(Boolean);
+			if (!types.includes(fineType)) return;
+			['0', '1'].forEach(mainType => {
+				if (types.includes(mainType)) matchingMainTypes.add(mainType);
+			});
+		});
+
+		typeInputs.forEach(input => {
+			const dataType = String(input.getAttribute('data-type'));
+			if (matchingMainTypes.has(dataType)) input.checked = true;
+		});
+	}
+
+	disableMainTypesWithoutFineTypes(typeInputs) {
+		const hasSelectedFineType = typeInputs.some(input => {
+			const dataType = String(input.getAttribute('data-type'));
+			return ['2', '3', '4', '5', '6', '7'].includes(dataType) && input.checked;
+		});
+		if (hasSelectedFineType) return;
+
+		typeInputs.forEach(input => {
+			const dataType = String(input.getAttribute('data-type'));
+			if (dataType === '0' || dataType === '1') input.checked = false;
+		});
+	}
+
+	disableMainTypesWithoutMatchingFineTypes(typeInputs) {
+		if (!this.allRows) return;
+
+		const selectedFineTypes = new Set(typeInputs
+			.filter(input => ['2', '3', '4', '5', '6', '7'].includes(String(input.getAttribute('data-type'))) && input.checked)
+			.map(input => String(input.getAttribute('data-type'))));
+		if (!selectedFineTypes.size) return;
+
+		typeInputs.forEach(input => {
+			const mainType = String(input.getAttribute('data-type'));
+			if (!['0', '1'].includes(mainType) || !input.checked) return;
+
+			const hasMatchingField = this.allRows.some(row => {
+				if (!row || !Array.isArray(row)) return false;
+				const types = String(row[2] || '').split(/[^0-9]+/).filter(Boolean);
+				return types.includes(mainType) && types.some(type => selectedFineTypes.has(type));
+			});
+			if (!hasMatchingField) input.checked = false;
 		});
 	}
 
@@ -390,28 +450,14 @@ class TypeFilter {
 					if (has0 || has1) return false;
 					return types.some(t => selectedTypesLive.has(t));
 				}
-				if (has0Selected && !has1Selected) {
-					if (!has0) return false;
-					if (selectedFine.length > 0) {
-						return types.some(t => selectedFine.includes(t) || t === '0');
-					}
-					return true;
-				}
-				if (!has0Selected && has1Selected) {
-					if (!has1) return false;
-					if (selectedFine.length > 0) {
-						return types.some(t => selectedFine.includes(t) || t === '1');
-					}
-					return true;
-				}
-				if (has0Selected && has1Selected) {
-					if (selectedFine.length > 0) {
-						return types.some(t => selectedTypesLive.has(t));
-					}
-					return has0 || has1;
-				}
 
-				return false;
+				const matchesMainType =
+					(has0Selected && has0) || (has1Selected && has1);
+				if (!matchesMainType) return false;
+
+				// 細分類が選択されている場合は、主分類だけで全件を通さない。
+				return selectedFine.length === 0 ||
+					types.some(t => selectedFine.includes(t));
 			});
 		}
 
@@ -440,7 +486,8 @@ class TypeFilter {
 		return filteredRows;
 	}
 
-	initAll() {
+	initAll(allRows) {
+		this.allRows = allRows;
 		this.initTypeFilterUI();
 		this.initLunchFilterUI();
 		this.initBusFilterUI();
