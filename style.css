@@ -290,6 +290,55 @@ body {
 
 #type-filter.collapsed { display: none !important; }
 
+.startup-popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 11000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.startup-popup {
+    width: min(460px, 100%);
+    padding: 24px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+}
+
+.startup-popup h2 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    color: #333;
+}
+
+.startup-popup-message {
+    margin: 0 0 24px;
+    color: #444;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
+.startup-popup-close {
+    display: block;
+    margin: 0 auto;
+    padding: 9px 24px;
+    border: none;
+    border-radius: 6px;
+    background: #007bff;
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.startup-popup-close:hover {
+    background: #005fc7;
+}
+
 /* =========================
    PC用（デスクトップ用）
    ========================= */
