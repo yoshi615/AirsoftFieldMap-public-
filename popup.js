@@ -1,7 +1,9 @@
 (() => {
     const message = `
 このアプリ内に表記している参加料金は土日祝の金額です。
-平日、半日等の料金は各欄のリンクから確認できます。`;
+平日、半日等の料金は各欄のリンクから確認できます。
+また、各欄にあるフィールドマップは実際のものに比べて古い場合がありますので、
+最新の情報は各施設の公式サイトをご確認ください。`;
 
     function showStartupPopup() {
         const overlay = document.createElement('div');
@@ -16,7 +18,7 @@
 
         const title = document.createElement('h2');
         title.id = 'startup-popup-title';
-        title.textContent = 'お知らせ';
+        title.textContent = 'はじめに';
 
         const content = document.createElement('p');
         content.className = 'startup-popup-message';
