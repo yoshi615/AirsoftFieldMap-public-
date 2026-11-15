@@ -350,7 +350,8 @@ function init() {
 			}
 			const customMarker = document.createElement('img');
 			customMarker.src = 'images/pin_blue.png';
-			customMarker.className = 'custom-marker';
+			const closed = isStriked(field_name);
+			customMarker.className = `custom-marker${closed ? ' is-closed' : ''}`;
 			customMarker.title = field_name;
 			const marker = new maplibregl.Marker({ element: customMarker, anchor: 'bottom' })
 				.setLngLat([lonNum, latNum])
@@ -358,35 +359,37 @@ function init() {
 			markers.push(marker);
 			markerDataList.push(row);
 
-			marker.getElement().addEventListener('click', (event) => {
-				event.stopPropagation();
-				const infoPanel = document.getElementById('info');
-				activateMarker(index);
+			if (!closed) {
+				marker.getElement().addEventListener('click', (event) => {
+					event.stopPropagation();
+					const infoPanel = document.getElementById('info');
+					activateMarker(index);
 
-				if (lastClickedMarker === marker) {
-					if (infoPanel) infoPanel.innerHTML = '';
-					lastClickedMarker = null;
-				} else {
-					if (infoPanel) infoPanel.innerHTML = markerInfoHtml(id, field_name, SiteLink, BookLink, BusBookLink, NearestStation, RegularMeetingCharge, CharterCharge, OtherInfo, lunch, num, where, RegLink);
-					lastClickedMarker = marker;
-				}
-				const leftPanel = document.getElementById('left-panel');
-				if (leftPanel) {
-					leftPanel.innerHTML = markerInfoHtml(id, field_name, SiteLink, BookLink, BusBookLink, NearestStation, RegularMeetingCharge, CharterCharge, OtherInfo, lunch, num, where, RegLink);
-					setupSlideshowListeners();
-					const backBtn = document.getElementById('back-to-list-btn');
-					if (backBtn) {
-						backBtn.addEventListener('click', function() {
-							resetActiveMarker();
-							lastActiveMarkerIndex = null;
-							showMarkerList(rows);
-							restoreMapView();
-						});
+					if (lastClickedMarker === marker) {
+						if (infoPanel) infoPanel.innerHTML = '';
+						lastClickedMarker = null;
+					} else {
+						if (infoPanel) infoPanel.innerHTML = markerInfoHtml(id, field_name, SiteLink, BookLink, BusBookLink, NearestStation, RegularMeetingCharge, CharterCharge, OtherInfo, lunch, num, where, RegLink);
+						lastClickedMarker = marker;
 					}
-				}
-				map.flyTo({ center: [lonNum, latNum], zoom: 17 });
-				if (window.innerWidth <= 767) setTimeout(() => map.resize(), 300);
-			});
+					const leftPanel = document.getElementById('left-panel');
+					if (leftPanel) {
+						leftPanel.innerHTML = markerInfoHtml(id, field_name, SiteLink, BookLink, BusBookLink, NearestStation, RegularMeetingCharge, CharterCharge, OtherInfo, lunch, num, where, RegLink);
+						setupSlideshowListeners();
+						const backBtn = document.getElementById('back-to-list-btn');
+						if (backBtn) {
+							backBtn.addEventListener('click', function() {
+								resetActiveMarker();
+								lastActiveMarkerIndex = null;
+								showMarkerList(rows);
+								restoreMapView();
+							});
+						}
+					}
+					map.flyTo({ center: [lonNum, latNum], zoom: 17 });
+					if (window.innerWidth <= 767) setTimeout(() => map.resize(), 300);
+				});
+			}
 		});
 		showMarkerList(allRows);
 	}
@@ -397,7 +400,7 @@ function init() {
 		if (BookLink && String(BookLink).trim() !== '') linksHtml += `<a href="${BookLink}" target="_blank">定例会・貸し切りの予約はここから</a><br>`;
 		if (BusBookLink && String(BusBookLink).trim() !== '') linksHtml += `<a href="${BusBookLink}" target="_blank">送迎バス予約はここから</a><br>`;
 if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWithStrikeAndBreak(OtherInfo)}</p><br>`;}
-		if (lunch && String(lunch).trim() !== '') linksHtml += `<p>昼食：${renderWithStrike(lunch)}あり</p><br>`;
+		if (lunch && String(lunch).trim() !== '') linksHtml += `<p>昼食：${renderWithStrikeAndBreak(lunch)}</p><br>`;
 		else {linksHtml += `<p>昼食：${renderWithStrike('なし')}</p><br>`;}
 		if (RegLink && String(RegLink).trim() !== '') linksHtml += `<a href="${RegLink}" target="_blank">レギュレーションはここから</a><br>`;
 		let imageHtml = '';
@@ -439,8 +442,16 @@ if (OtherInfo && String(OtherInfo).trim() !== '') {linksHtml += `<p>${renderWith
 			${linksHtml}
 			<p>最寄り駅: ${renderWithStrike(NearestStation)}</p>
 			${whereHtml}
-			<p>定期会料金: ${renderWithStrike(RegularMeetingCharge)}円</p>
-			<p>貸し切り料金: ${renderWithStrike(CharterCharge)}円</p>
+			<p>定例会料金: ${
+				RegularMeetingCharge && String(RegularMeetingCharge).trim() !== ''
+					? renderWithStrikeAndBreak(RegularMeetingCharge)
+					: '無し'
+			}</p>
+			<p>貸し切り料金: ${
+				CharterCharge && String(CharterCharge).trim() !== ''
+					? renderWithStrikeAndBreak(CharterCharge)
+					: '無し'
+			}</p>
 			${imageHtml}
 		`;
 	}
